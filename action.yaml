@@ -1,0 +1,79 @@
+name: Set Steam Build Live
+author: Randolph William Aarseth II <randolph@divine.games>
+description: Publishes a Steam build using SetAppBuildLive API
+branding:
+  icon: 'briefcase'
+  color: 'green'
+
+inputs:
+  steam_api_key:
+    description: Steamworks Web API publisher authentication key
+    required: true
+  app_id:
+    description: AppID of the game
+    required: true
+  build_id:
+    description: BuildID to publish
+    required: true
+  beta_key:
+    description: Branch key (e.g., "public")
+    required: true
+  steam_id:
+    description: SteamID of the account (required if beta_key is "public")
+    required: false
+  description:
+    description: Optional description for this build
+    required: false
+
+outputs:
+  result_code:
+    description: The HTTP response code returned by the Steam API
+    value: ${{ steps.set-live.outputs.result_code }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set App Build Live
+      id: set-live
+      shell: bash
+      run: |
+        echo "🔧 Preparing to publish build ${{ inputs.build_id }} for App ${{ inputs.app_id }} to '${{ inputs.beta_key }}'..."
+
+        # Base URL for API
+        API_URL="https://partner.steam-api.com/ISteamApps/SetAppBuildLive/v2/"
+
+        # Build POST body
+        POST_DATA="key=${{ inputs.steam_api_key }}&appid=${{ inputs.app_id }}&buildid=${{ inputs.build_id }}&betakey=${{ inputs.beta_key }}"
+
+        # If 'public', validate steam_id presence
+        if [ "${{ inputs.beta_key }}" = "public" ]; then
+          if [ -z "${{ inputs.steam_id }}" ]; then
+            echo "❌ 'steam_id' is required when using 'public' beta_key" >&2
+            exit 1
+          fi
+          POST_DATA="${POST_DATA}&steamid=${{ inputs.steam_id }}"
+        fi
+
+        # Add description if provided
+        if [ -n "${{ inputs.description }}" ]; then
+          ENCODED_DESC=$(printf '%s' "${{ inputs.description }}" | jq -sRr @uri)
+          POST_DATA="${POST_DATA}&description=${ENCODED_DESC}"
+        fi
+
+        echo "🌐 Sending POST request to Steam API..."
+        RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$API_URL" -d "$POST_DATA")
+
+        # Parse response
+        BODY=$(echo "$RESPONSE" | sed '$d')
+        CODE=$(echo "$RESPONSE" | tail -n1)
+
+        echo "ℹ️ Response Code: $CODE" >> $GITHUB_STEP_SUMMARY
+        echo "📝 Response Body:\n$BODY" >> $GITHUB_STEP_SUMMARY
+        echo "result_code=$CODE" >> $GITHUB_OUTPUT
+
+        if [[ "$CODE" != "200" && "$CODE" != "201" ]]; then
+          echo "❌ Failed to set build live. Steam API returned HTTP $CODE" >&2
+          exit 1
+        fi
+
+        echo "✅ Build set live successfully."
