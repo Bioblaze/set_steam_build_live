@@ -1,3 +1,5 @@
+> **Deprecated.** Promoting a Steam build live now lives in [blazium-cli](https://github.com/blazium-games/blazium-cli): `blazium-cli deploy steam set-live`. This Action is no longer developed.
+
 # 🎮 Set Steam Build Live
 
 A GitHub composite action for safely publishing a Steam build using the `SetAppBuildLive` Steamworks Web API.
