@@ -31,30 +31,15 @@ A GitHub composite action for safely publishing a Steam build using the `SetAppB
 
 ## 🚀 Usage
 
-```yaml
-name: Publish Steam Build
+This Action is deprecated. Promote a Steam build with:
 
-on:
-  workflow_dispatch:
-
-jobs:
-  publish:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set Build Live on Steam
-        uses: Bioblaze/set_steam_build_live@main
-        with:
-          steam_api_key: ${{ secrets.STEAM_API_KEY }}
-          app_id: 123456
-          build_id: 789012
-          beta_key: public
-          steam_id: ${{ secrets.STEAMID }}
-          description: "Auto-published via GitHub Actions"
+```text
+blazium-cli deploy steam set-live --build-id ID --beta-key public
 ```
 
-> **Note:** If your `beta_key` is `public`, `steam_id` is required and must have the **Edit App** and **Publish** permissions in Steamworks. The account will receive a mobile confirmation.
+Set `BLAZIUM_STEAM_API_KEY`, `BLAZIUM_STEAM_APP_ID`, and (for `public`) `BLAZIUM_STEAM_ID`. See [blazium-cli deploy](https://github.com/blazium-games/blazium-cli).
+
+If `beta_key` is `public`, `steam_id` is required and must have **Edit App** and **Publish** permissions in Steamworks. The account will receive a mobile confirmation.
 
 ---
 
